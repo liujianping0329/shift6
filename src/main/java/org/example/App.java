@@ -13,7 +13,8 @@ public class App {
         button1.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                System.out.println(111);
+                Main.main(new String[1]);
+                button1.setText("ok");
             }
         });
     }

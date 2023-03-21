@@ -1,8 +1,6 @@
 package org.example;
 
 import com.alibaba.fastjson.JSONArray;
-import jdk.nashorn.internal.parser.JSONParser;
-import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -11,7 +9,6 @@ import org.example.vo.CellDate;
 import org.example.vo.PersonInfo;
 import org.example.vo.PersonInfoOneDay;
 
-import javax.swing.*;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.ParseException;
@@ -57,7 +54,23 @@ public class Main {
         return infos;
     }
 
-    private static List<PersonInfoOneDay> readFromExl(List<Map<String,String>> def) {
+    private static Map<String,String> readFromExlName() {
+        Map<String,String> names=new HashMap<>();
+        XSSFWorkbook workbook = null;
+        try {
+            workbook = new XSSFWorkbook(path);
+            XSSFSheet sheet = workbook.getSheetAt(1);
+            for (Row row : sheet) {
+                names.put(getCellString(row.getCell(1)),getCellString(row.getCell(0)));
+            }
+            workbook.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return names;
+    }
+
+    private static List<PersonInfoOneDay> readFromExl(List<Map<String,String>> def, Map<String, String> names) {
         List<PersonInfoOneDay> infos=new ArrayList<>();
         XSSFWorkbook workbook = null;
         try {
@@ -79,11 +92,12 @@ public class Main {
                         colIndex++;
                         continue;
                     }
+                    String nameJP = getCellString(sheet.getRow(0).getCell(colIndex));
                     PersonInfo per=PersonInfo.builder()
-                            .name(getCellString(sheet.getRow(0).getCell(colIndex)))
+                            .name(names.get(nameJP))
                             .time(getCellString(row.getCell(colIndex))).build();
                     if("".equals(per.getTime().trim())){
-                        per.setTime(def.get(cellDate.getYobi()-1).get(per.getName()));
+                        per.setTime(def.get(cellDate.getYobi()).get(nameJP));
                     }
                     if(per.getTime()!=null&&!"".equals(per.getTime().trim())){
                         personInfos.add(per);
@@ -113,9 +127,12 @@ public class Main {
             Date dateKijun=sdf.parse("20230308");
             Calendar cal=Calendar.getInstance();
             cal.setTime(dateKijun);
+            cal.setFirstDayOfWeek(Calendar.SUNDAY);
             cal.add(Calendar.DATE,Integer.parseInt(getCellString(cell).split("\\.")[0])-DAY20230308);
-            return CellDate.builder().date(cal.getTime()).dateStr(sdf.format(cal.getTime()))
-                    .yobi(cal.get(Calendar.DAY_OF_WEEK)).build();
+            CellDate cellDate = CellDate.builder().date(cal.getTime()).dateStr(sdf.format(cal.getTime()))
+                    .yobi(cal.get(Calendar.DAY_OF_WEEK)-1).build();
+//            if(cellDate.getYobi()==7)
+            return cellDate;
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
@@ -134,7 +151,8 @@ public class Main {
     }
     public static void main(String[] args) {
         List<Map<String, String>> def = readFromExlDef();
-        System.out.println(outPut(readFromExl(def)));
+        Map<String, String> names = readFromExlName();
+        System.out.println(outPut(readFromExl(def,names)));
 //        readFromExl();
     }
 }
