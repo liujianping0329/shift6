@@ -87,12 +87,15 @@ public class Main {
                 personInfoOneDay.setDate(cellDate.getDateStr());
                 int colIndex=0;
                 List<PersonInfo> personInfos=new ArrayList<>();
-                for (Cell cell: row) {
+                while (true) {
                     if(colIndex==0){
                         colIndex++;
                         continue;
                     }
                     String nameJP = getCellString(sheet.getRow(0).getCell(colIndex));
+                    if("".equals(nameJP)){
+                        break;
+                    }
                     PersonInfo per=PersonInfo.builder()
                             .name(names.get(nameJP))
                             .time(getCellString(row.getCell(colIndex))).build();
