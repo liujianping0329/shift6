@@ -82,6 +82,9 @@ public class Main {
                     rowIndex++;
                     continue;
                 }
+                if(getCellString(row.getCell(0)).equals("")){
+                    break;
+                }
                 PersonInfoOneDay personInfoOneDay=PersonInfoOneDay.builder().build();
                 CellDate cellDate=getCellDate(row.getCell(0));
                 personInfoOneDay.setDate(cellDate.getDateStr());
